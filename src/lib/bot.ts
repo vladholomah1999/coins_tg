@@ -1,5 +1,4 @@
 import { Telegraf } from 'telegraf'
-import { Message } from 'telegraf/types'
 import prisma from './db'
 
 if (!process.env.TELEGRAM_BOT_TOKEN) {
@@ -8,16 +7,16 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 
-// Базова URL вашого веб-додатку
 const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || 'http://localhost:3000'
 
 // Команда /start
 bot.command('start', async (ctx) => {
-  const { id, first_name, username } = ctx.from
-
   try {
+    const { id, first_name, username } = ctx.from || {}
+    if (!id) return
+
     // Створюємо або отримуємо користувача
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { telegramId: id.toString() },
       update: {},
       create: {
@@ -57,8 +56,11 @@ bot.command('help', async (ctx) => {
 // Команда /balance
 bot.command('balance', async (ctx) => {
   try {
+    const telegramId = ctx.from?.id.toString()
+    if (!telegramId) return
+
     const user = await prisma.user.findUnique({
-      where: { telegramId: ctx.from.id.toString() }
+      where: { telegramId }
     })
 
     if (!user) {
@@ -74,19 +76,25 @@ bot.command('balance', async (ctx) => {
   }
 })
 
-// Обробка тексту
-bot.on('text', async (ctx: { message: Message.TextMessage }) => {
-  const text = ctx.message.text.toLowerCase()
+// Обробка текстових повідомлень
+bot.on('text', async (ctx) => {
+  try {
+    const text = ctx.message.text.toLowerCase()
 
-  if (text === 'баланс') {
-    return ctx.reply('Використайте команду /balance для перевірки балансу')
+    if (text === 'баланс') {
+      await ctx.reply('Використайте команду /balance для перевірки балансу')
+      return
+    }
+
+    if (text === 'допомога') {
+      await ctx.reply('Використайте команду /help для отримання списку команд')
+      return
+    }
+
+    await ctx.reply('Використайте команду /help для отримання списку доступних команд')
+  } catch (error) {
+    console.error('Text handler error:', error)
   }
-
-  if (text === 'допомога') {
-    return ctx.reply('Використайте команду /help для отримання списку команд')
-  }
-
-  await ctx.reply('Використайте команду /help для отримання списку доступних команд')
 })
 
 export default bot
