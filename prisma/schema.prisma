@@ -8,18 +8,14 @@ datasource db {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  telegramId  String    @unique
-  username    String?
-  balance     BigInt    @default(0)
-  wallet      String?
-  lastBonus   DateTime?
-  dailyStreak Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  referrals Referral[] @relation("Referrer")
-  referred  Referral[] @relation("Referred")
+  id         Int        @id @default(autoincrement())
+  telegramId String     @unique
+  username   String?
+  balance    BigInt     @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  referrals  Referral[] @relation("Referrer")
+  referred   Referral[] @relation("Referred")
 }
 
 model Referral {
@@ -28,7 +24,6 @@ model Referral {
   referredId Int
   claimed    Boolean  @default(false)
   createdAt  DateTime @default(now())
-
-  referrer User @relation("Referrer", fields: [referrerId], references: [id])
-  referred User @relation("Referred", fields: [referredId], references: [id])
+  referrer   User     @relation("Referrer", fields: [referrerId], references: [id])
+  referred   User     @relation("Referred", fields: [referredId], references: [id])
 }

@@ -1,0 +1,4 @@
+export const INITIAL_COINS = 1000
+export const FRIEND_BONUS = 5000
+export const PRICE_PER_THOUSAND = 9.17
+export const DAILY_STREAK_BONUSES = [100, 200, 300, 400, 500, 600, 700]
