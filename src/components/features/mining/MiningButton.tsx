@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 
 interface MiningButtonProps {
   onMine: () => void
-  cooldown?: number  // в секундах
+  cooldown?: number
   isDisabled?: boolean
 }
 
@@ -30,7 +30,7 @@ export const MiningButton = ({
     if (isDisabled || timeLeft > 0 || isAnimating) return
 
     setIsAnimating(true)
-    // Анімація майнінгу (1 секунда)
+    // Анімація майнінгу
     setTimeout(() => {
       setIsAnimating(false)
       onMine()
@@ -55,14 +55,19 @@ export const MiningButton = ({
         transition-colors duration-300
         flex items-center justify-center
         text-white font-bold text-xl
+        relative
+        overflow-hidden
       `}
     >
       {isAnimating ? (
-        'Mining...'
+        'Майнінг...'
       ) : timeLeft > 0 ? (
-        `${timeLeft}s`
+        `${timeLeft}с`
       ) : (
-        'Mine'
+        'Майнити'
+      )}
+      {isAnimating && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shine" />
       )}
     </button>
   )

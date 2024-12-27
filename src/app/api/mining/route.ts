@@ -15,13 +15,25 @@ export async function POST(req: Request) {
       )
     }
 
-    // Випадкова кількість монет
+    // Знаходимо користувача
+    const user = await prisma.user.findUnique({
+      where: { telegramId }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    // Генеруємо випадкову кількість монет
     const minedCoins = Math.floor(
       Math.random() * (MAX_COINS - MIN_COINS + 1) + MIN_COINS
     )
 
     // Оновлюємо баланс користувача
-    const user = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { telegramId },
       data: {
         balance: {
@@ -33,7 +45,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       minedCoins,
-      newBalance: user.balance
+      newBalance: updatedUser.balance.toString(),
+      message: `Ви намайнили ${minedCoins} NOT!`
     })
   } catch (error) {
     console.error('Mining error:', error)
