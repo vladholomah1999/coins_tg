@@ -1,26 +1,28 @@
 import { NextResponse } from 'next/server'
 import bot from '@/lib/bot'
 
-// Секретний шлях для вебхуків
-const secretPath = `/api/telegram/webhook/${process.env.TELEGRAM_BOT_TOKEN}`
-
+// Отримуємо оновлення від Telegram
 export async function POST(req: Request) {
   try {
-    if (req.url.endsWith(secretPath)) {
-      const update = await req.json()
-      await bot.handleUpdate(update)
-      return NextResponse.json({ ok: true })
-    }
+    console.log('Отримано вебхук від Telegram')
 
-    return NextResponse.json(
-      { error: 'Invalid secret path' },
-      { status: 401 }
-    )
+    const update = await req.json()
+    console.log('Дані оновлення:', JSON.stringify(update, null, 2))
+
+    // Обробляємо оновлення
+    await bot.handleUpdate(update)
+
+    return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('Помилка обробки вебхука:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
   }
+}
+
+// Перевірка роботи вебхука
+export async function GET() {
+  return NextResponse.json({ status: 'Webhook endpoint is working' })
 }
