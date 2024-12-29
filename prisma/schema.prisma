@@ -7,19 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          Int       @id @default(autoincrement())
-  telegramId  String    @unique
-  username    String?
-  balance     BigInt    @default(0)
-  wallet      String?
-  lastBonus   DateTime?
-  dailyStreak Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  amount          Float
+  type            String // 'PURCHASE', 'BONUS', 'REFERRAL'
+  status          String // 'PENDING', 'COMPLETED', 'FAILED'
+  transactionHash String?
+  createdAt       DateTime @default(now())
+}
 
-  referrals Referral[] @relation("Referrer")
-  referred  Referral[] @relation("Referred")
+model User {
+  id           Int           @id @default(autoincrement())
+  telegramId   String        @unique
+  username     String?
+  balance      BigInt        @default(0)
+  wallet       String?
+  lastBonus    DateTime?
+  dailyStreak  Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  referrals    Referral[]    @relation("Referrer")
+  referred     Referral[]    @relation("Referred")
 }
 
 model Referral {

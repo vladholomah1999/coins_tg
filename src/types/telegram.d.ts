@@ -1,28 +1,22 @@
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: WebApp;
-    }
+export interface TelegramUser {
+  id: number
+  first_name: string
+  username?: string
+}
+
+export interface TelegramWebApp {
+  ready: () => void
+  expand: () => void
+  showAlert: (message: string) => void
+  initDataUnsafe: {
+    user?: TelegramUser
   }
 }
 
-interface WebApp {
-  ready(): void;
-  expand(): void;
-  close(): void;
-  initData: string;
-  initDataUnsafe: {
-    query_id: string;
-    user: {
-      id: number;
-      first_name: string;
-      last_name?: string;
-      username?: string;
-      language_code?: string;
-    };
-    auth_date: number;
-    hash: string;
-  };
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: TelegramWebApp
+    }
+  }
 }
-
-export {};
