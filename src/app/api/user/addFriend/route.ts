@@ -5,15 +5,33 @@ export async function POST(req: Request) {
   try {
     const { telegramId } = await req.json()
 
-    const user = await prisma.user.update({
-      where: { telegramId },
+    // Спочатку перевіряємо чи існує користувач
+    let user = await prisma.user.findUnique({
+      where: { telegramId }
+    })
+
+    // Якщо користувача немає, створюємо його
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          telegramId,
+          balance: BigInt(0),
+          username: '',
+        }
+      })
+    }
+
+    // Оновлюємо баланс користувача
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
       data: {
         balance: {
-          increment: 5000
+          increment: 5000 // бонус за друга
         }
       }
     })
 
+    // Отримуємо список друзів
     const friends = await prisma.referral.findMany({
       where: { referrerId: user.id },
       include: {
@@ -23,7 +41,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      balance: user.balance.toString(),
+      balance: updatedUser.balance.toString(),
       friends: friends.map(f => ({
         username: f.referred.username,
         createdAt: f.createdAt
@@ -31,6 +49,9 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error('Add friend error:', error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to add friend' },
+      { status: 500 }
+    )
   }
 }
