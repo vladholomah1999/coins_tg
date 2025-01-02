@@ -1,10 +1,13 @@
-export interface TonWallet {
-  send: (method: string, params: any) => Promise<{ hash: string }>
-  connect: () => Promise<{ address: string }>
+export interface TonWalletResult {
+  address: string;
+  transaction?: string;
 }
 
 declare global {
   interface Window {
-    ton?: TonWallet
+    ton?: {
+      send: (method: string, params: any) => Promise<any>;
+      connect: () => Promise<{ address: string }>;
+    };
   }
 }
