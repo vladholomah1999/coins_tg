@@ -1,0 +1,151 @@
+import React, { useState, useRef, useCallback, memo } from 'react';
+import TurboVideo from './TurboVideo';
+import './ExchangeDisplay.css';
+
+type ExchangeDisplayProps = {
+  onClick: () => void;
+  turboActive: boolean;
+  multitapLevel: number;
+}
+
+type Animation = {
+  id: number;
+  x: number;
+  y: number;
+  createdAt: number;
+}
+
+type Coordinates = {
+  x: number;
+  y: number;
+}
+
+const CLICK_COOLDOWN = 50; // ms
+const ANIMATION_DURATION = 1000; // ms
+const ANIMATION_CLEANUP_INTERVAL = 100; // ms
+
+const ExchangeDisplay = memo<ExchangeDisplayProps>(({
+  onClick,
+  turboActive,
+  multitapLevel
+}) => {
+  const [animations, setAnimations] = useState<Animation[]>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const lastClickTime = useRef<Record<number, number>>({});
+
+  const calculateButtonTransform = (touchX: number, touchY: number): string => {
+    if (!buttonRef.current) return '';
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const relativeX = touchX - rect.left;
+    const relativeY = touchY - rect.top;
+
+    const angleX = ((centerY - relativeY) / centerY) * 20;
+    const angleY = ((relativeX - centerX) / centerX) * 20;
+
+    return `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale(0.95)`;
+  };
+
+  const createAnimation = (coordinates: Coordinates): Animation => ({
+    id: Date.now() + Math.random(),
+    x: coordinates.x,
+    y: coordinates.y,
+    createdAt: Date.now()
+  });
+
+  const resetButtonTransform = (delay: number = 150): void => {
+    if (!buttonRef.current) return;
+
+    const timeoutId = setTimeout(() => {
+      if (buttonRef.current) {
+        buttonRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+      }
+    }, delay);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  const handleInteraction = useCallback((coordinates: Coordinates, identifier: number): void => {
+    const now = Date.now();
+    if (now - (lastClickTime.current[identifier] || 0) < CLICK_COOLDOWN) return;
+
+    lastClickTime.current[identifier] = now;
+    if (!buttonRef.current) return;
+
+    buttonRef.current.style.transform = calculateButtonTransform(coordinates.x, coordinates.y);
+
+    setAnimations(prev => [...prev, createAnimation({
+      x: coordinates.x - (buttonRef.current?.getBoundingClientRect().left || 0),
+      y: coordinates.y - (buttonRef.current?.getBoundingClientRect().top || 0)
+    })]);
+
+    onClick();
+    resetButtonTransform();
+  }, [onClick]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>): void => {
+    e.preventDefault();
+    handleInteraction({ x: e.clientX, y: e.clientY }, e.pointerId);
+  }, [handleInteraction]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLButtonElement>): void => {
+    e.preventDefault();
+    Array.from(e.touches).forEach(touch => {
+      handleInteraction({ x: touch.clientX, y: touch.clientY }, touch.identifier);
+    });
+  }, [handleInteraction]);
+
+  // Очистка старих анімацій
+  React.useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      setAnimations(prevAnimations =>
+        prevAnimations.filter(anim => now - anim.createdAt < ANIMATION_DURATION)
+      );
+    }, ANIMATION_CLEANUP_INTERVAL);
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  return (
+    <div className="exchange-display">
+      <div className="tap-button-container">
+        <TurboVideo isActive={turboActive} />
+        <button
+          ref={buttonRef}
+          type="button"
+          className="tap-button"
+          onPointerDown={handlePointerDown}
+          onTouchStart={handleTouchStart}
+        >
+          <img
+            src="/images/tap.png"
+            alt="Tap"
+            className="tap-image"
+            width={64}
+            height={64}
+          />
+          {animations.map((anim) => (
+            <div
+              key={anim.id}
+              className="plus-one"
+              style={{
+                left: anim.x,
+                top: anim.y,
+                opacity: 1 - (Date.now() - anim.createdAt) / ANIMATION_DURATION
+              }}
+            >
+              +{turboActive ? multitapLevel * 5 : multitapLevel}
+            </div>
+          ))}
+        </button>
+      </div>
+    </div>
+  );
+});
+
+ExchangeDisplay.displayName = 'ExchangeDisplay';
+
+export default ExchangeDisplay;

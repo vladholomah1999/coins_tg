@@ -1,0 +1,224 @@
+import axios, { AxiosError } from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+interface ApiError {
+  message: string;
+  error?: string;
+  details?: string;
+  status?: number;
+}
+
+interface User {
+  telegramId: string;
+  firstName: string;
+  lastName?: string;
+  username?: string;
+  coins: string; // Змінено на string для підтримки bigint
+  totalCoins: string; // Змінено на string для підтримки bigint
+  level: string;
+  referralCode: string;
+  referralLink: string;
+  photoUrl?: string;
+  hasUnclaimedRewards: boolean;
+  friends: Friend[];
+}
+
+interface Friend {
+  telegramId: string;
+  firstName: string;
+  lastName?: string;
+  username?: string;
+  coins: string; // Змінено на string для підтримки bigint
+  totalCoins: string; // Змінено на string для підтримки bigint
+  level: string;
+  photoUrl?: string;
+}
+
+interface Reward {
+  id: number;
+  referredUser: {
+    id: string;
+    name: string;
+    username?: string;
+  };
+  amount: string; // Змінено на string для підтримки bigint
+  createdAt: string;
+}
+
+interface RewardsResponse {
+  success: boolean;
+  rewards: Reward[];
+  error?: string;
+}
+
+interface ClaimRewardResponse {
+  success: boolean;
+  claimedAmount: string; // Змінено на string для підтримки bigint
+  newBalance: string; // Змінено на string для підтримки bigint
+  error?: string;
+}
+
+interface ReferralResponse {
+  success: boolean;
+  message: string;
+  bonusCoins: string; // Змінено на string для підтримки bigint
+  error?: string;
+}
+
+interface UserLevelResponse {
+  level: string;
+  coins: string; // Змінено на string для підтримки bigint
+  totalCoins: string; // Змінено на string для підтримки bigint
+}
+
+interface UpdateCoinsResponse {
+  newCoins: string; // Змінено на string для підтримки bigint
+  newTotalCoins: string; // Змінено на string для підтримки bigint
+}
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const handleApiError = (error: AxiosError<ApiError>) => {
+  console.error('API Error:', {
+    message: error.message,
+    response: error.response?.data,
+    status: error.response?.status
+  });
+
+  let errorMessage = 'An error occurred while processing your request.';
+
+  if (error.response?.data?.message) {
+    errorMessage = error.response.data.message;
+  } else if (error.response) {
+    switch (error.response.status) {
+      case 400:
+        errorMessage = 'Invalid request. Please check your data.';
+        break;
+      case 401:
+        errorMessage = 'Authentication required. Please log in again.';
+        break;
+      case 403:
+        errorMessage = 'You do not have permission to perform this action.';
+        break;
+      case 404:
+        errorMessage = 'The requested resource was not found.';
+        break;
+      case 429:
+        errorMessage = 'Too many requests. Please try again later.';
+        break;
+      case 500:
+        errorMessage = 'Server error. Please try again later.';
+        break;
+      default:
+        errorMessage = error.response.data?.error || 'Unknown error occurred';
+    }
+  }
+
+  const apiError = new Error(errorMessage) as Error & { status?: number };
+  apiError.status = error.response?.status;
+  return Promise.reject(apiError);
+};
+
+api.interceptors.request.use(
+  (config) => {
+    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`, config.data || config.params);
+    return config;
+  },
+  (error: AxiosError<ApiError>) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log(`Response from ${response.config.url}:`, response.data);
+    return response;
+  },
+  (error: AxiosError<ApiError>) => {
+    return handleApiError(error);
+  }
+);
+
+export const updateUserCoins = async (userId: string, coinsToAdd: number): Promise<UpdateCoinsResponse> => {
+  try {
+    console.log(`Updating user coins: userId=${userId}, coinsToAdd=${coinsToAdd}`);
+    const response = await api.post<UpdateCoinsResponse>('/api/updateUserCoins', {
+      userId,
+      coinsToAdd: coinsToAdd.toString() // Конвертуємо в string для передачі великих чисел
+    });
+    console.log('Coins updated:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating coins:', error);
+    throw error;
+  }
+};
+
+export const processReferral = async (referralCode: string, userId: string): Promise<ReferralResponse> => {
+  try {
+    console.log(`Processing referral: referralCode=${referralCode}, userId=${userId}`);
+    const response = await api.post<ReferralResponse>('/api/processReferral', {
+      referralCode,
+      userId
+    });
+    console.log('Referral processed:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error processing referral:', error);
+    throw error;
+  }
+};
+
+export const getUserData = async (userId: string): Promise<User> => {
+  try {
+    console.log(`Getting user data for userId: ${userId}`);
+    const response = await api.get<User>('/api/getUserData', {
+      params: { userId }
+    });
+    console.log('User data received:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    throw error;
+  }
+};
+
+export const updateUserLevel = async (userId: string, newLevel: string): Promise<UserLevelResponse> => {
+  try {
+    console.log(`Updating user level: userId=${userId}, newLevel=${newLevel}`);
+    const response = await api.post<UserLevelResponse>('/api/updateUserLevel', {
+      userId,
+      newLevel
+    });
+    console.log('User level updated:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user level:', error);
+    throw error;
+  }
+};
+
+export const claimReward = async (userId: string, rewardId: number): Promise<ClaimRewardResponse> => {
+  try {
+    console.log(`Claiming reward: userId=${userId}, rewardId=${rewardId}`);
+    const response = await api.post<ClaimRewardResponse>('/api/claimReward', {
+      userId,
+      rewardId
+    });
+    console.log('Reward claimed:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error claiming reward:', error);
+    throw error;
+  }
+};
+
+export default api;

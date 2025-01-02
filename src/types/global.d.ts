@@ -1,28 +1,34 @@
+import { WebAppInstance } from '@twa-dev/sdk';
+
 declare global {
   interface Window {
     Telegram?: {
-      WebApp: {
-        ready: () => void
-        expand: () => void
-        showAlert: (message: string) => void
-        initDataUnsafe: {
-          user?: {
-            id: number
-            first_name: string
-            username?: string
-          }
-        }
-      }
-    }
-    ton?: {
-      send: (method: string, params: any) => Promise<{
-        hash: string
-      }>
-      connect: () => Promise<{
-        address: string
-      }>
-    }
+      WebApp?: WebAppInstance & {
+        shareUrl?: (url: string) => void;
+      };
+    };
   }
 }
 
-export {}
+// Додаємо інші глобальні типи, які можуть бути корисними
+declare global {
+  interface Navigator {
+    // Додаємо підтримку для clipboard API
+    clipboard?: {
+      writeText(text: string): Promise<void>;
+      readText(): Promise<string>;
+    };
+  }
+}
+
+// Додаємо типи для змінних середовища
+declare namespace NodeJS {
+  interface ProcessEnv {
+    REACT_APP_API_URL: string;
+    REACT_APP_BOT_USERNAME: string;
+    REACT_APP_TELEGRAM_BOT_TOKEN?: string;
+    REACT_APP_ENVIRONMENT?: 'development' | 'production' | 'test';
+  }
+}
+
+export {};

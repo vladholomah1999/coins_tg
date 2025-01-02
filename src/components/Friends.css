@@ -1,0 +1,502 @@
+.friends-page {
+  min-height: 100vh;
+  background-color: #000000;
+  padding: 16px 16px 100px 16px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Заголовок сторінки */
+.page-title {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 20px 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Секція профілю */
+.profile-section {
+  background: #1C1C1E;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.profile-section:hover {
+  transform: translateY(-2px);
+}
+
+/* Кнопка винагород */
+.reward-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reward-button:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.reward-button:active {
+  transform: scale(0.95);
+}
+
+.reward-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Анімація мигання */
+@keyframes blink {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.blinking {
+  animation: blink 1.5s infinite ease-in-out;
+}
+
+/* Модальне вікно винагород */
+.rewards-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.rewards-modal-content {
+  background: #1C1C1E;
+  border-radius: 20px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  animation: contentSlideUp 0.3s ease-out;
+}
+
+@keyframes contentSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rewards-modal-content h2 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reward-item {
+  background: rgba(51, 144, 236, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease;
+  border: 1px solid rgba(51, 144, 236, 0.2);
+}
+
+.reward-item:hover {
+  transform: translateY(-2px);
+  background: rgba(51, 144, 236, 0.15);
+}
+
+.reward-info {
+  flex: 1;
+}
+
+.reward-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.reward-amount {
+  font-size: 24px !important;
+  font-weight: 600;
+  color: #3390EC !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.claim-button {
+  background: #3390EC;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+ letter-spacing: 0.03125rem; /* еквівалент 0.5px */
+}
+
+.claim-button:not(:disabled):hover {
+  background: #2a73bc;
+  transform: translateY(-1px);
+}
+
+.claim-button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.claim-button:disabled {
+  background: #2a73bc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.close-modal-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  color: white;
+  font-weight: 600;
+  margin-top: 20px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.03125rem; /* еквівалент 0.5px */
+}
+
+.close-modal-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.close-modal-button:active {
+  transform: translateY(1px);
+}
+
+/* Профіль */
+.profile-label {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: #3390EC;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.profile-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  object-fit: cover;
+  border: 2px solid #3390EC;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.profile-level {
+  font-size: 14px;
+  color: #8E8E93;
+}
+
+/* Реферальна інформація */
+.referral-info {
+  background: rgba(51, 144, 236, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid rgba(51, 144, 236, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.referral-info:hover {
+  transform: translateY(-2px);
+}
+
+.referral-text {
+  color: #3390EC;
+  font-size: 16px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.invite-button {
+  background: #3390EC;
+  border-radius: 16px;
+  border: none;
+  padding: 16px;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.03125rem; /* еквівалент 0.5px */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.invite-button:hover {
+  background: #2a73bc;
+  transform: translateY(-2px);
+}
+
+.invite-button:active {
+  transform: translateY(1px);
+}
+
+/* Секція друзів */
+.friends-section {
+  background: #1C1C1E;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.friends-header {
+  margin-bottom: 20px;
+}
+
+.friends-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 500px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.friends-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.friends-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.friends-list::-webkit-scrollbar-thumb {
+  background: rgba(51, 144, 236, 0.5);
+  border-radius: 3px;
+}
+
+.friend-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  transition: transform 0.2s ease;
+}
+
+.friend-card:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.friend-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  margin-right: 12px;
+  object-fit: cover;
+  border: 2px solid #3390EC;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.friend-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.friend-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.friend-level {
+  font-size: 14px;
+  color: #8E8E93;
+}
+
+.no-friends-message {
+  text-align: center;
+  color: #8E8E93;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Loading та Error стани */
+.loading-spinner {
+  text-align: center;
+  padding: 20px;
+  color: #3390EC;
+  font-weight: 500;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #ff3b30;
+  font-weight: 500;
+}
+
+/* Адаптивні стилі */
+@media (max-width: 480px) {
+  .friends-page {
+    padding: 12px 12px 80px 12px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    margin: 16px 0;
+  }
+
+  .profile-section {
+    padding: 16px;
+  }
+
+  .reward-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .rewards-modal-content {
+    padding: 20px;
+  }
+
+  .rewards-modal-content h2 {
+    font-size: 20px;
+  }
+
+  .profile-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  .profile-name {
+    font-size: 18px;
+  }
+
+  .profile-level {
+    font-size: 13px;
+  }
+
+  .invite-button {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .friends-section {
+    padding: 16px;
+  }
+
+  .friends-header h2 {
+    font-size: 18px;
+  }
+
+  .friend-card {
+    padding: 10px;
+  }
+
+  .friend-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .friend-name {
+    font-size: 14px;
+  }
+
+  .friend-level {
+    font-size: 12px;
+  }
+}

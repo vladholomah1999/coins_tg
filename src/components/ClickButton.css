@@ -1,0 +1,57 @@
+.click-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.click-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  outline: none;
+}
+
+.click-button:active {
+  transform: scale(0.95);
+}
+
+.click-button:focus {
+  outline: none;
+}
+
+.tap-image {
+  width: 100px;
+  height: 100px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.plus-one {
+  position: absolute;
+  font-size: 24px;
+  font-weight: bold;
+  pointer-events: none;
+  animation: floatUp 0.5s ease-out forwards;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.plus-one.turbo {
+  color: #ffd700;
+}
+
+.plus-one.normal {
+  color: #ffffff;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+}

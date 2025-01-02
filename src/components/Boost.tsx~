@@ -1,0 +1,314 @@
+import React, { useState, useCallback, memo } from 'react';
+import { useBoost } from '../BoostContext';
+import { useEnergy } from '../EnergyContext';
+import { updateUserCoins } from '../api';
+import MultitapButton from './MultitapButton';
+import EnergyBoostButton from './EnergyBoostButton';
+import EnergyRecoveryButton from './EnergyRecoveryButton';
+import { useTelegram } from '../hooks/useTelegram';
+import './Boost.css';
+
+type BoostProps = {
+  balance: number;
+  setCurrentView: (view: string) => void;
+  onMultitapUpgrade: (level: number, cost: number) => void;
+  onEnergyBoostUpgrade: (newMaxEnergy: number, cost: number) => void;
+  onEnergyRecoveryUpgrade: (newRate: number, cost: number) => void;
+  currentLevel: number;
+  currentMaxEnergy: number;
+  currentEnergyRecoveryRate: number;
+  onRewardsClick: () => void;
+  rewardsReceived: boolean;
+}
+
+type ButtonContent = {
+  image: string;
+  text: string;
+  timer: React.ReactNode;
+}
+
+const Boost = memo<BoostProps>(({
+  balance,
+  setCurrentView,
+  onMultitapUpgrade,
+  onEnergyBoostUpgrade,
+  onEnergyRecoveryUpgrade,
+  currentLevel,
+  currentMaxEnergy,
+  currentEnergyRecoveryRate,
+  onRewardsClick,
+  rewardsReceived: initialRewardsReceived
+}) => {
+  const [showRewardModal, setShowRewardModal] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState(0);
+  const [localRewardsReceived, setLocalRewardsReceived] = useState(initialRewardsReceived);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const {
+    turboCount,
+    turboTimer,
+    cooldownTimer,
+    activateTurbo
+  } = useBoost();
+
+  const {
+    energyRefillCount,
+    energyRefillCooldown,
+    activateEnergyRefill
+  } = useEnergy();
+
+  const { tg } = useTelegram();
+  const userId = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem('userId');
+
+  const [localTurboCount, setLocalTurboCount] = useState(turboCount);
+  const [localEnergyRefillCount, setLocalEnergyRefillCount] = useState(energyRefillCount);
+
+  const syncWithDatabase = useCallback(async (costAmount: number): Promise<boolean> => {
+    if (!userId) return false;
+    try {
+      await updateUserCoins(userId, costAmount);
+      return true;
+    } catch (error) {
+      console.error('Error syncing with database:', error);
+      return false;
+    }
+  }, [userId]);
+
+  const handleMultitapUpgrade = useCallback((level: number, cost: number): void => {
+    if (isProcessing || balance < cost) return;
+
+    setIsProcessing(true);
+    void syncWithDatabase(cost)
+      .then(syncSuccess => {
+        if (syncSuccess) {
+          onMultitapUpgrade(level, cost);
+          localStorage.setItem('multitapLevel', level.toString());
+        }
+      })
+      .catch(error => {
+        console.error('Error in multitap upgrade:', error);
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  }, [onMultitapUpgrade, balance, isProcessing, syncWithDatabase]);
+
+  const handleEnergyBoostUpgrade = useCallback((newMaxEnergy: number, cost: number): void => {
+    if (isProcessing || balance < cost) return;
+
+    setIsProcessing(true);
+    void syncWithDatabase(cost)
+      .then(syncSuccess => {
+        if (syncSuccess) {
+          onEnergyBoostUpgrade(newMaxEnergy, cost);
+          localStorage.setItem('maxEnergy', newMaxEnergy.toString());
+        }
+      })
+      .catch(error => {
+        console.error('Error in energy boost upgrade:', error);
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  }, [onEnergyBoostUpgrade, balance, isProcessing, syncWithDatabase]);
+
+  const handleEnergyRecoveryUpgrade = useCallback((newRate: number, cost: number): void => {
+    if (isProcessing || balance < cost) return;
+
+    setIsProcessing(true);
+    void syncWithDatabase(cost)
+      .then(syncSuccess => {
+        if (syncSuccess) {
+          onEnergyRecoveryUpgrade(newRate, cost);
+          localStorage.setItem('energyRecoveryRate', newRate.toString());
+        }
+      })
+      .catch(error => {
+        console.error('Error in energy recovery upgrade:', error);
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  }, [onEnergyRecoveryUpgrade, balance, isProcessing, syncWithDatabase]);
+
+  const handleActivateTurbo = useCallback((): void => {
+    if (isProcessing) return;
+
+    activateTurbo();
+    setLocalTurboCount(prevCount => {
+      const newCount = prevCount > 0 ? prevCount - 1 : 0;
+      localStorage.setItem('turboCount', newCount.toString());
+      return newCount;
+    });
+    setCurrentView('mine');
+  }, [activateTurbo, setCurrentView, isProcessing]);
+
+  const handleActivateEnergyRefill = useCallback((): void => {
+    if (isProcessing) return;
+
+    activateEnergyRefill();
+    setLocalEnergyRefillCount(prevCount => {
+      const newCount = prevCount > 0 ? prevCount - 1 : 0;
+      localStorage.setItem('energyRefillCount', newCount.toString());
+      return newCount;
+    });
+    setCurrentView('mine');
+  }, [activateEnergyRefill, setCurrentView, isProcessing]);
+
+  const calculateReward = useCallback((currentBalance: number): number => {
+    if (currentBalance < 5000) return 1000;
+    if (currentBalance < 25000) return 10000;
+    if (currentBalance < 100000) return 15000;
+    if (currentBalance < 1000000) return 30000;
+    if (currentBalance < 2000000) return 50000;
+    return 5000000;
+  }, []);
+
+  const handleRewardsClick = useCallback((): void => {
+    if (localRewardsReceived || isProcessing) return;
+
+    const reward = calculateReward(balance);
+    if (!userId) return;
+
+    setIsProcessing(true);
+    void syncWithDatabase(-reward)
+      .then(syncSuccess => {
+        if (syncSuccess) {
+          setRewardAmount(reward);
+          setShowRewardModal(true);
+          setLocalRewardsReceived(true);
+          localStorage.setItem('rewardsReceived', 'true');
+          onRewardsClick();
+        }
+      })
+      .catch(error => {
+        console.error('Error claiming reward:', error);
+        setLocalRewardsReceived(false);
+        localStorage.setItem('rewardsReceived', 'false');
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  }, [balance, localRewardsReceived, onRewardsClick, isProcessing, syncWithDatabase, userId, calculateReward]);
+
+  const getButtonContent = useCallback((content: ButtonContent): JSX.Element => (
+    <>
+      <div className="boost-image-container">
+        <img src={content.image} alt={content.text} className="boost-image" />
+      </div>
+      <div className="boost-text-container">
+        <span className="boost-text">{content.text}</span>
+        <span className="boost-timer">{content.timer}</span>
+      </div>
+    </>
+  ), []);
+
+  return (
+    <div className="boost">
+      <h1 className="boost-title">Boost</h1>
+      <h2 className="balance-title">Your Balance</h2>
+      <div className="balance">
+        <img src="/images/balance.png" alt="Balance" className="balance-icon"/>
+        <span>{balance}</span>
+      </div>
+      <div className="boost-section">
+        <h3 className="boost-section-title">Free Daily Boosters</h3>
+        <div className="boost-buttons-container">
+          <button
+            onClick={handleActivateTurbo}
+            disabled={localTurboCount === 0 || turboTimer > 0 || cooldownTimer > 0 || isProcessing}
+            className={`boost-button ${turboTimer > 0 ? 'active' : ''} ${isProcessing ? 'processing' : ''}`}
+          >
+            {getButtonContent({
+              image: "/images/x5.png",
+              text: "Turbo",
+              timer: turboTimer > 0 ? `${turboTimer}s` :
+                cooldownTimer > 0 ? `Cooldown: ${cooldownTimer}s` :
+                `${localTurboCount}/3`
+            })}
+          </button>
+          <button
+            onClick={handleActivateEnergyRefill}
+            disabled={localEnergyRefillCount === 0 || energyRefillCooldown > 0 || isProcessing}
+            className={`boost-button energy-button ${isProcessing ? 'processing' : ''}`}
+          >
+            {getButtonContent({
+              image: "/images/fullenergy.png",
+              text: "Energy",
+              timer: energyRefillCooldown > 0 ? `Cooldown: ${energyRefillCooldown}s` : `${localEnergyRefillCount}/3`
+            })}
+          </button>
+          <button
+            onClick={handleRewardsClick}
+            className={`boost-button rewards-button ${!localRewardsReceived ? 'active' : ''} ${isProcessing ? 'processing' : ''}`}
+            disabled={localRewardsReceived || isProcessing}
+          >
+            {getButtonContent({
+              image: "/images/level-b.png",
+              text: "Rewards",
+              timer: localRewardsReceived ? (
+                <img src="/images/done.png" alt="Done" className="done-icon boost-timer"/>
+              ) : (
+                <span className="rewards-notification">Get</span>
+              )
+            })}
+          </button>
+        </div>
+      </div>
+      <div className="boost-section">
+        <h3 className="boost-section-title">Boosters</h3>
+        <MultitapButton
+          balance={balance}
+          onMultitapUpgrade={handleMultitapUpgrade}
+          currentLevel={currentLevel}
+        />
+        <EnergyBoostButton
+          balance={balance}
+          onEnergyBoostUpgrade={handleEnergyBoostUpgrade}
+          currentMaxEnergy={currentMaxEnergy}
+        />
+        <EnergyRecoveryButton
+          balance={balance}
+          onEnergyRecoveryUpgrade={handleEnergyRecoveryUpgrade}
+          currentEnergyRecoveryRate={currentEnergyRecoveryRate}
+        />
+      </div>
+      {showRewardModal && (
+        <div className="reward-modal">
+          <div className="reward-content">
+            <div className="congrats-image-container">
+              <img src="/images/donefree.png" alt="Congratulations" className="congrats-image"/>
+              <div className="flying-circle"></div>
+              <div className="flying-circle"></div>
+              <div className="flying-circle"></div>
+              <div className="flying-circle"></div>
+              <div className="flying-circle"></div>
+            </div>
+            <h2 className="congrats-text">Congratulations!</h2>
+            <p className="reward-text">You have received a reward</p>
+            <div className="reward-amount">
+              <img src="/images/balance.png" alt="Balance" className="balance-icons"/>
+              <span>{rewardAmount}</span>
+            </div>
+            <button
+              className="back-button"
+              onClick={() => setShowRewardModal(false)}
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+      {isProcessing && (
+        <div className="processing-overlay">
+          <div className="processing-spinner"></div>
+          <div className="processing-text">Processing...</div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+Boost.displayName = 'Boost';
+
+export default Boost;
