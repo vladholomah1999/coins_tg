@@ -1,30 +1,21 @@
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: {
-        ready: () => void;
-        expand: () => void;
-        showAlert: (message: string) => void;
-        initDataUnsafe: {
-          user?: {
-            id: number;
-            first_name: string;
-            username?: string;
-          };
-        };
-        openTonWallet: (params: {
-          address: string;
-          amount?: string;
-          comment?: string;
-          payload?: string;
-        }) => Promise<{
-          address: string;
-          transaction?: string;
-        }>;
-        sendData: (data: string) => void;
-      };
-    };
+import type { TelegramUser, TelegramWebApp } from '@/types/telegram'
+
+export const getTelegramUser = (): TelegramUser | undefined => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    return window.Telegram.WebApp.initDataUnsafe.user
+  }
+  return undefined
+}
+
+export const showAlert = (message: string): void => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    window.Telegram.WebApp.showAlert(message)
   }
 }
 
-export {};
+export const getTelegramWebApp = (): TelegramWebApp | undefined => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    return window.Telegram.WebApp
+  }
+  return undefined
+}
