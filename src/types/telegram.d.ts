@@ -14,7 +14,13 @@ declare global {
         };
         openTonWallet: (params: {
           address: string;
-        }) => Promise<{ address: string }>;
+          amount?: string;
+          comment?: string;
+          payload?: string;
+        }) => Promise<{
+          address: string;
+          transaction?: string;
+        }>;
         sendData: (data: string) => void;
       };
     };
