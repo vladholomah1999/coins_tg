@@ -12,18 +12,20 @@ export const TonConnector = ({ onConnect, onDisconnect }: TonConnectorProps) => 
   const [address, setAddress] = useState('')
 
   const handleConnect = async () => {
-    if (!window.ton) {
-      window.open('https://chrome.google.com/webstore/detail/ton-wallet/nphplpgoakhhjchkkhmiggakijnkhfnd', '_blank')
-      return
-    }
-
     try {
-      const result = await window.ton.connect()
-      setAddress(result.address)
-      setIsConnected(true)
-      onConnect(result.address)
+      // Використовуємо Telegram Mini Apps API для відкриття TON гаманця
+      const result = await window.Telegram.WebApp.openTonWallet({
+        address: '' // залиште порожнім для вибору гаманця
+      })
+
+      if (result.address) {
+        setAddress(result.address)
+        setIsConnected(true)
+        onConnect(result.address)
+      }
     } catch (error) {
       console.error('Connect error:', error)
+      window.Telegram.WebApp.showAlert('Помилка підключення гаманця')
     }
   }
 
