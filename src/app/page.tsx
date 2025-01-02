@@ -72,41 +72,42 @@ export default function Home() {
    initializeUser()
  }, [])
 
-const handleWalletConnect = (address: string) => {
-  if (!address) return;
+ const handleWalletConnect = (address: string): void => {
+   if (!telegramId) return
 
-  fetch('/api/wallet/connect', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ telegramId, walletAddress: address })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        setWalletAddress(address)
-      }
-    })
-    .catch(console.error)
-}
+   fetch('/api/wallet/connect', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ telegramId, walletAddress: address })
+   })
+     .then(response => response.json())
+     .then(data => {
+       if (data.success) {
+         setWalletAddress(address)
+       }
+     })
+     .catch(console.error)
+ }
 
-const handleWalletDisconnect = () => {
-  if (!telegramId) return;
+ const handleWalletDisconnect = (): void => {
+   if (!telegramId) return
 
-  fetch('/api/wallet/disconnect', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ telegramId })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        setWalletAddress('')
-      }
-    })
-    .catch(console.error)
-}
+   fetch('/api/wallet/disconnect', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ telegramId })
+   })
+     .then(response => response.json())
+     .then(data => {
+       if (data.success) {
+         setWalletAddress('')
+       }
+     })
+     .catch(console.error)
+ }
+
  const handleTransaction = async (): Promise<void> => {
-   if (!window.ton || !walletAddress) return
+   if (!window.ton || !walletAddress || !telegramId) return
 
    setIsTransacting(true)
    try {
