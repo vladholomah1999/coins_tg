@@ -111,28 +111,30 @@ export default function Home() {
 
    setIsTransacting(true)
    try {
-     await window.Telegram.WebApp.openTonWallet({
+     const result = await window.Telegram.WebApp.openTonWallet({
        address: process.env.NEXT_PUBLIC_RECEIVER_ADDRESS || '',
-       amount: '1000000000', // 1 TON в наногрмах
+       amount: '1000000000',
        comment: 'Покупка NOT токенів'
      })
 
-     const response = await fetch('/api/transactions', {
-       method: 'POST',
-       headers: {
-         'Content-Type': 'application/json'
-       },
-       body: JSON.stringify({
-         telegramId,
-         amount: 1,
-         transactionHash: new Date().getTime().toString() // тимчасово
+     if (result.transaction) {
+       const response = await fetch('/api/transactions', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({
+           telegramId,
+           amount: 1,
+           transactionHash: result.transaction
+         })
        })
-     })
 
-     const data = await response.json()
-     if (data.success) {
-       setBalance(Number(data.newBalance))
-       window.Telegram.WebApp.showAlert('Успішна покупка! Ви отримали 100,000 NOT')
+       const data = await response.json()
+       if (data.success) {
+         setBalance(Number(data.newBalance))
+         window.Telegram.WebApp.showAlert('Успішна покупка! Ви отримали 100,000 NOT')
+       }
      }
    } catch (error) {
      console.error('Transaction failed:', error)

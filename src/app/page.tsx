@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { TonConnector } from '@/components/features/wallet/TonConnector'
 import { TransactionButton } from '@/components/features/wallet/TransactionButton'
+import { getTelegramWebApp, showAlert } from '@/lib/telegram'
 
 interface TelegramUser {
  id: number
@@ -33,38 +34,38 @@ export default function Home() {
 
  useEffect(() => {
    const initializeUser = async () => {
-     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-       const tg = window.Telegram.WebApp
-       tg.ready()
-       tg.expand()
+     const tg = getTelegramWebApp()
+     if (!tg) return
 
-       const userData = tg.initDataUnsafe.user as TelegramUser | undefined
-       if (userData?.id) {
-         try {
-           const response = await fetch('/api/user/initialize', {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json'
-             },
-             body: JSON.stringify({
-               telegramId: userData.id.toString(),
-               username: userData.first_name || ''
-             })
+     tg.ready()
+     tg.expand()
+
+     const userData = tg.initDataUnsafe.user as TelegramUser | undefined
+     if (userData?.id) {
+       try {
+         const response = await fetch('/api/user/initialize', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json'
+           },
+           body: JSON.stringify({
+             telegramId: userData.id.toString(),
+             username: userData.first_name || ''
            })
+         })
 
-           const data = await response.json()
-           if (data.success) {
-             setTelegramId(userData.id.toString())
-             setUsername(userData.first_name)
-             setBalance(Number(data.balance))
-             setFriends(data.friends || [])
-             if (data.wallet) {
-               setWalletAddress(data.wallet)
-             }
+         const data = await response.json()
+         if (data.success) {
+           setTelegramId(userData.id.toString())
+           setUsername(userData.first_name)
+           setBalance(Number(data.balance))
+           setFriends(data.friends || [])
+           if (data.wallet) {
+             setWalletAddress(data.wallet)
            }
-         } catch (error) {
-           console.error('Failed to initialize user:', error)
          }
+       } catch (error) {
+         console.error('Failed to initialize user:', error)
        }
      }
    }
@@ -107,11 +108,12 @@ export default function Home() {
  }
 
  const handleTransaction = async (): Promise<void> => {
-   if (!walletAddress || !telegramId) return
+   const tg = getTelegramWebApp()
+   if (!walletAddress || !telegramId || !tg) return
 
    setIsTransacting(true)
    try {
-     const result = await window.Telegram.WebApp.openTonWallet({
+     const result = await tg.openTonWallet({
        address: process.env.NEXT_PUBLIC_RECEIVER_ADDRESS || '',
        amount: '1000000000',
        comment: 'Покупка NOT токенів'
@@ -133,12 +135,12 @@ export default function Home() {
        const data = await response.json()
        if (data.success) {
          setBalance(Number(data.newBalance))
-         window.Telegram.WebApp.showAlert('Успішна покупка! Ви отримали 100,000 NOT')
+         showAlert('Успішна покупка! Ви отримали 100,000 NOT')
        }
      }
    } catch (error) {
      console.error('Transaction failed:', error)
-     window.Telegram.WebApp.showAlert('Помилка транзакції. Спробуйте ще раз')
+     showAlert('Помилка транзакції. Спробуйте ще раз')
    } finally {
      setIsTransacting(false)
    }
