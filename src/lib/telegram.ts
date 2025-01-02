@@ -1,9 +1,14 @@
-import { Telegraf } from 'telegraf'
+import type { TelegramUser } from '@/types/telegram'
 
-if (!process.env.TELEGRAM_BOT_TOKEN) {
-  throw new Error('TELEGRAM_BOT_TOKEN must be provided!')
+export const getTelegramUser = (): TelegramUser | undefined => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    return window.Telegram.WebApp.initDataUnsafe.user
+  }
+  return undefined
 }
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
-
-export default bot
+export const showAlert = (message: string): void => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    window.Telegram.WebApp.showAlert(message)
+  }
+}

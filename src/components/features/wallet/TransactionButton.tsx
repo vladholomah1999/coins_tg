@@ -1,25 +1,21 @@
 'use client'
 
-interface TransactionButtonProps {
+type TransactionButtonProps = {
   amount: number
-  onTransaction: () => void
+  onTransaction(): void
   disabled?: boolean
 }
 
-export const TransactionButton = ({
-  amount,
-  onTransaction,
-  disabled
-}: TransactionButtonProps) => (
+export const TransactionButton = (props: TransactionButtonProps) => (
   <button
-    onClick={onTransaction}
-    disabled={disabled}
+    onClick={props.onTransaction}
+    disabled={props.disabled}
     className={`
       w-full py-3 rounded-lg text-white
-      ${disabled ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}
+      ${props.disabled ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}
       transition-colors
     `}
   >
-    Купити {amount} NOT за 1 TON
+    Купити {props.amount} NOT за 1 TON
   </button>
 )

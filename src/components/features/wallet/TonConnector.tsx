@@ -1,39 +1,37 @@
 'use client'
 
-import { useState } from 'react'
-import type { TonWallet } from '@/types/ton'
+import { useState } from 'react';
 
-interface TonConnectorProps {
-  onConnect: (address: string) => void
-  onDisconnect: () => void
-}
+type TonConnectorProps = {
+  onConnect: string;
+  onDisconnect: string;
+};
 
-export const TonConnector = ({ onConnect, onDisconnect }: TonConnectorProps) => {
-  const [isConnected, setIsConnected] = useState(false)
-  const [address, setAddress] = useState('')
+export const TonConnector = (props: TonConnectorProps) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState('');
 
   const handleConnect = async () => {
-    try {
-      const ton = window.ton as TonWallet | undefined
-      if (!ton) {
-        window.open('https://chrome.google.com/webstore/detail/ton-wallet/nphplpgoakhhjchkkhmiggakijnkhfnd', '_blank')
-        return
-      }
-
-      const { address } = await ton.connect()
-      setIsConnected(true)
-      setAddress(address)
-      onConnect(address)
-    } catch (error) {
-      console.error('Connect error:', error)
+    if (!window.ton) {
+      window.open('https://chrome.google.com/webstore/detail/ton-wallet/nphplpgoakhhjchkkhmiggakijnkhfnd', '_blank');
+      return;
     }
-  }
+
+    try {
+      const result = await window.ton.connect();
+      setAddress(result.address);
+      setIsConnected(true);
+      window.localStorage.setItem(props.onConnect, result.address);
+    } catch (error) {
+      console.error('Connect error:', error);
+    }
+  };
 
   const handleDisconnect = () => {
-    setIsConnected(false)
-    setAddress('')
-    onDisconnect()
-  }
+    setIsConnected(false);
+    setAddress('');
+    window.localStorage.removeItem(props.onDisconnect);
+  };
 
   return (
     <button
@@ -51,5 +49,5 @@ export const TonConnector = ({ onConnect, onDisconnect }: TonConnectorProps) => 
         'Підключити TON гаманець'
       )}
     </button>
-  )
-}
+  );
+};

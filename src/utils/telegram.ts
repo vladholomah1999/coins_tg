@@ -1,21 +1,29 @@
-export const initTelegram = () => {
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-    const tg = window.Telegram.WebApp
-    tg.ready()
-    tg.expand()
-    return tg
-  }
-  return null
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  username?: string;
 }
 
-export const getTelegramUser = () => {
-  const tg = initTelegram()
-  if (tg?.initDataUnsafe?.user) {
-    return {
-      id: tg.initDataUnsafe.user.id.toString(),
-      username: tg.initDataUnsafe.user.first_name,
-      lastName: tg.initDataUnsafe.user.last_name
-    }
-  }
-  return null
+export interface TelegramWebApp {
+  ready(): void;
+  expand(): void;
+  showAlert(message: string): void;
+  initDataUnsafe: {
+    user?: TelegramUser;
+  };
 }
+
+interface TelegramWindow {
+  WebApp: TelegramWebApp;
+}
+
+declare global {
+  interface Window {
+    Telegram?: TelegramWindow;
+  }
+}
+
+export const getTelegramWebApp = (): TelegramWebApp | undefined => {
+  if (typeof window === 'undefined') return undefined;
+  return window.Telegram?.WebApp;
+};
